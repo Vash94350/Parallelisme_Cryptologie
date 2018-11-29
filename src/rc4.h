@@ -26,13 +26,19 @@ namespace rc4 {
 			   
 				}
 				
-				unsigned char * rc4Encryption(string messageToEncypt, string key){
+				string rc4Encryption(string messageToEncrypt, string key){
 					
-					unsigned char * encryptedMessage =  (unsigned char *) malloc(messageToEncypt.size() + 1);
+					int messageToEncryptLength = messageToEncrypt.length();
 					
-					encrypt((unsigned char *) messageToEncypt.c_str(), encryptedMessage, messageToEncypt.length(), (unsigned char *) key.c_str(), key.length());
+					unsigned char * encryptedMessage =  (unsigned char *) malloc(messageToEncrypt.size() + 1);
 					
-					return encryptedMessage;
+					encrypt((unsigned char *) messageToEncrypt.c_str(), encryptedMessage, messageToEncrypt.length(), (unsigned char *) key.c_str(), key.length());
+					
+					std::string encryptedString((char*) encryptedMessage);
+					
+					encryptedString = encryptedString.substr(0, messageToEncryptLength);
+					
+					return encryptedString;
 				}				
 			
 			private:
