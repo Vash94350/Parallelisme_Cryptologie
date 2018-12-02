@@ -9,7 +9,7 @@
 using std::string;
 
 using namespace rc4::sequential;
-using namespace fileManager::sequential;
+using namespace fileManager::parallel;
 
 int main(int argc, char *argv[]) {
 	
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	
 	string extension = argv[1];
 
-	int threadNumber = atoi(argv[2]);
+	unsigned long int threadNumber = atoi(argv[2]);
 	
 	string inputFileName = argv[3];
 	
@@ -36,11 +36,24 @@ int main(int argc, char *argv[]) {
 		outputFileName = outputFileName + ".decrypt";
 	}
 	
+	string * chunkedInputFile = fileManager.readAndChunkFile(inputFileName, threadNumber);
+	
+	unsigned long long int chunkedInputFileLength = fileManager.numberOfChunckedPart(inputFileName, threadNumber);
+	
+	cout << chunkedInputFileLength << "\n"; 
+	
+	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
+		
+        cout << chunkedInputFile[i] << "\n"; 
+	}
+	
+	/*
 	string messageToEncrypt = fileManager.readFile(inputFileName);
 	
 	string encrypted = rc4.rc4Encryption(messageToEncrypt, key);
 
 	fileManager.writeFile(outputFileName, encrypted);
+	*/
 	
 	return 0;
 }

@@ -34,7 +34,7 @@ namespace rc4 {
 					
 					encrypt((unsigned char *) messageToEncrypt.c_str(), encryptedMessage, messageToEncrypt.length(), (unsigned char *) key.c_str(), key.length());
 					
-					std::string encryptedString((char*) encryptedMessage);
+					string encryptedString((char*) encryptedMessage);
 					
 					encryptedString = encryptedString.substr(0, messageToEncryptLength);
 					
