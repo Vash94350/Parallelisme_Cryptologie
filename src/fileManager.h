@@ -2,6 +2,7 @@
 #define FILEMANAGER_H
 
 #include <fstream>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -87,16 +88,32 @@ namespace fileManager {
 					
 					unsigned long long int numberOfChunckedPart = threadNumber;
 					
-					if(chunkSize==1){
+					if( (threadNumber>fileLength) || (chunkSize==1) ){
 						
 						numberOfChunckedPart = fileLength;
+						
+						chunkSize = 1;
 					}
 					else if( (numberOfChunckedPart*chunkSize) < fileLength ) {
 						
 						numberOfChunckedPart ++;
 					}
 					
-					return chunkFile(formatedFilename, numberOfChunckedPart, chunkSize);
+					string * chunkedFileTable = chunkFile(formatedFilename, numberOfChunckedPart, chunkSize);
+					
+					if(numberOfChunckedPart > threadNumber){
+						
+						string one = chunkedFileTable[threadNumber-1];
+						string two = chunkedFileTable[numberOfChunckedPart-1];
+						
+						string fusion = one + two;
+						
+						chunkedFileTable[threadNumber-1] = fusion;					
+					}	
+					
+					chunkedFileTable = verifyChunkedFileTableLength(fileLength, chunkedFileTable, threadNumber);
+					
+					return chunkedFileTable;
 				}
 				
 				unsigned long long int numberOfChunckedPart(string fileName, unsigned long int threadNumber) {
@@ -108,17 +125,35 @@ namespace fileManager {
 					unsigned long long int chunkSize = (int) fileLength / threadNumber;
 					
 					unsigned long long int numberOfChunckedPart = threadNumber;
-					
-					if(chunkSize==1){
+	
+					if( (threadNumber>fileLength) || (chunkSize==1) ){
+						
+						numberOfChunckedPart = fileLength;
+					}	
+					else if(chunkSize==1){
 						
 						numberOfChunckedPart = fileLength;
 					}
-					else if( (numberOfChunckedPart*chunkSize) < fileLength ) {
-						
-						numberOfChunckedPart ++;
-					}
 					
 					return numberOfChunckedPart;
+				}			
+				
+				void writeFile(string fileName, string data, bool appendMode) {
+					
+					ofstream outputFile;
+					
+					if(appendMode) {
+						
+						outputFile.open(fileName, std::ios_base::app);
+					}
+					else {
+						
+						outputFile.open(fileName);
+					}				
+
+					outputFile << data;
+					
+					outputFile.close();					
 				}
 			
 			private:
@@ -149,7 +184,7 @@ namespace fileManager {
 						
 						counter++;							
 					}
-						
+				
 					fileStream.close();
 
 					return chunkedFileTable;
@@ -172,7 +207,26 @@ namespace fileManager {
 					return length;
 				}
 				
-				
+				string * verifyChunkedFileTableLength(unsigned long long int fileLength, string * chunkedFileTable, unsigned long int threadNumber){
+			
+					unsigned long long int chunkedFileTableLength = 0;
+			
+					for(unsigned long int i = 0; i < threadNumber; i++) {
+		
+						chunkedFileTableLength += chunkedFileTable[i].length();
+					}
+					
+					if(chunkedFileTableLength != fileLength){
+						
+						unsigned long long int numberOfOverflowChar = chunkedFileTableLength - fileLength;
+						
+						unsigned long long int goodLength = chunkedFileTable[threadNumber-1].length() - numberOfOverflowChar;
+					
+						chunkedFileTable[threadNumber-1] = chunkedFileTable[threadNumber-1].substr(0, goodLength);
+					}
+					
+					return chunkedFileTable;
+				}
 		};		
 	}
 }
