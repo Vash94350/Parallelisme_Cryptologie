@@ -1,6 +1,7 @@
 #include "rc4.h"
 #include "fileManager.h"
 
+#include <queue>
 #include <thread>
 #include <future>
 #include <stdio.h>
@@ -10,16 +11,23 @@
 
 using std::string;
 
-using namespace rc4::parallel;
+using namespace rc4::sequential;
 using namespace fileManager::parallel;
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
 	
-	FileManager fileManager;
+	if(argc<5){
 	
-	string key = "yolo";
+		cout << "Error ! Missing Argument !" << endl;
+		
+		cout << "Argument Pattern : main.exe {-e|-d} NB_THREADS INPUT_FILE OUTPUT_FILE KEY" << endl;
+		
+		return 0;
+	}
+	
+	FileManager fileManager;
 	
 	string extension = argv[1];
 
@@ -28,6 +36,8 @@ int main(int argc, char *argv[]) {
 	string inputFileName = argv[3];
 	
 	string outputFileName = argv[4];
+
+	string key = argv[5];
 	
 	if(extension.compare("-e") == 0){
 	
@@ -44,11 +54,13 @@ int main(int argc, char *argv[]) {
 	
 	string * encryptedString = new string[chunkedInputFileLength];
 	
-	unsigned long long int indexesState = 0;
+	//unsigned long long int indexesState = 0;
+	
+	deque<future<string>> threadFutureDeque;
 	
 	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
 		
-		cout << chunkedInputFile[i] << endl;
+		//cout << chunkedInputFile[i] << endl;
 		
 		RC4 rc4;
 		//RC4 * rc4 = new RC4();
@@ -58,25 +70,33 @@ int main(int argc, char *argv[]) {
 		
 		//auto f4 = std::bind(&Foo::bar4, &foo, _1, _2, _3, _4);
 		
-		if(i != 0){
+		/*if(i != 0){
             
 			indexesState = indexesState + chunkedInputFile[i-1].length()-1;
             
 			rc4.setIndexes(indexesState);
-		}
+		}*/
 		
-		auto future = std::async(RC4::rc4Encryption, &rc4, chunkedInputFile[i], key);
+		threadFutureDeque.emplace_back(async(&RC4::rc4Encryption, rc4, chunkedInputFile[i], key));
 		
-		encryptedString[i] = future.get();
+		//encryptedString[i] = future.get();		
 		
 		//encryptedString[i] = std::thread t(&RC4::rc4Encryption, &rc4, chunkedInputFile[i], key);
 		
 		//t.join();
 	}
 	
+	for(unsigned long int j= 0; j < threadNumber; j++) {
+
+        threadFutureDeque[j].wait();
+
+        encryptedString[j] = threadFutureDeque[j].get();
+
+    }
+	
 	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
 		
-		cout << encryptedString[i] << endl;
+		//cout << encryptedString[i] << endl;
 		
 		if(i==0){
 		

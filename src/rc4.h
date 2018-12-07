@@ -27,7 +27,7 @@ namespace rc4 {
 				}
 				
 				string rc4Encryption(string messageToEncrypt, string key){
-					
+				
 					int messageToEncryptLength = messageToEncrypt.length();
 					
 					unsigned char * encryptedMessage =  (unsigned char *) malloc(messageToEncrypt.size() + 1);
@@ -114,9 +114,7 @@ namespace rc4 {
 					
 					unsigned long long int messageToEncryptLength = messageToEncrypt.length();
 					
-					unsigned char * encryptedMessage =  (unsigned char *) malloc(messageToEncrypt.size() + 1);
-					
-					encrypt((unsigned char *) messageToEncrypt.c_str(), encryptedMessage, messageToEncrypt.length(), (unsigned char *) key.c_str(), key.length());
+					unsigned char * encryptedMessage = encrypt((unsigned char *) messageToEncrypt.c_str(), messageToEncryptLength, (unsigned char *) key.c_str(), key.length());
 					
 					string encryptedString((char*) encryptedMessage);
 					
@@ -125,15 +123,15 @@ namespace rc4 {
 					return encryptedString;
 				}
 
-				void setIndexes(unsigned long long int  lastPosition) {
+				void setAandB(unsigned long long int  lastPosition) {
 
-					for(unsigned long long int  z=0; z<lastPosition; z++) {
+					for(unsigned long long int z=0; z<lastPosition; z++) {
 
 						a = (a  + 1) % 256;
 					
 						b = (b + swapBox[a]) % 256;
 						
-						swap(swapBox, a, b);
+						swap(a, b);
 					}
 				}
 			
@@ -143,16 +141,16 @@ namespace rc4 {
 				
 				unsigned long long int a = 0, b = 0;
 				
-				void encrypt(unsigned char * toEncrypt, unsigned char * cryptedOutput, unsigned long long int  messageSize, unsigned char key[], unsigned long long int  keySize){
+				unsigned char * encrypt(unsigned char * toEncrypt, unsigned long long int  messageSize, unsigned char * key, unsigned long long int  keySize){
 				
 					for(unsigned long long int  i=0; i<256; i++){
 				
-						swapBox[i] = (unsigned char) i;				
-					}		
+						swapBox[i] = (unsigned char) i;
+					}
 				
 					ksa(key, keySize);
 				
-					prga(toEncrypt, cryptedOutput, messageSize);				
+					return prga(toEncrypt, messageSize);				
 				}
 				
 				void ksa(unsigned char * key, int keySize){
@@ -161,33 +159,37 @@ namespace rc4 {
 				
 					for(int i=0; i<256; i++){
 				
-						j=(j+swapBox[i]+key[i% keySize])%256;
+						j = (j+swapBox[i]+key[i%keySize])%256;
 				
-						swap(swapBox,i,j);				
+						swap(i,j);
 					}				
 				}
 			
-				void prga(unsigned char * toEncrypt, unsigned char * cryptedOutput, unsigned long long int  messageSize){
+				unsigned char * prga(unsigned char * toEncrypt, unsigned long long int  messageSize){
 				
-					for(unsigned long long int  c=0; c<messageSize; c++){
+					unsigned char * encryptedMessage =  (unsigned char *) malloc(messageSize + 1);
+				
+					for(unsigned long long int c=0; c<messageSize; c++){
 
 						a = (a+1) % 256;
 
 						b = (b+swapBox[a]) % 256;
 
-						swap(swapBox, a, b);
+						swap(a, b);
 
-						cryptedOutput[c] = swapBox[ (swapBox[a] + swapBox[b]) %256 ] ^ toEncrypt[c];
+						encryptedMessage[c] = swapBox[ (swapBox[a] + swapBox[b]) %256 ] ^ toEncrypt[c];
 					}
+					
+					return encryptedMessage;
 				}			
 				
-				void swap(unsigned char data[], unsigned long long int  i , unsigned long long int  j){
+				void swap(unsigned long long int  i , unsigned long long int  j){
 				
-					unsigned char temp = data[i];
+					unsigned char temp = swapBox[i];
 				
-					data[i] = data[j];
+					swapBox[i] = swapBox[j];
 				
-					data[j] = temp;				
+					swapBox[j] = temp;				
 				}
 		};
 	}
