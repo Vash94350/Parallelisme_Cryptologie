@@ -11,7 +11,7 @@
 
 using std::string;
 
-using namespace rc4::sequential;
+using namespace rc4::parallel;
 using namespace fileManager::parallel;
 
 using namespace std;
@@ -54,36 +54,22 @@ int main(int argc, char *argv[]) {
 	
 	string * encryptedString = new string[chunkedInputFileLength];
 	
-	//unsigned long long int indexesState = 0;
+	unsigned long long int aAndBState = 0;
 	
 	deque<future<string>> threadFutureDeque;
 	
 	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
 		
-		//cout << chunkedInputFile[i] << endl;
-		
 		RC4 rc4;
-		//RC4 * rc4 = new RC4();
 		
-		//std::thread t(&rc4::rc4Encryption, chunkedInputFile[i], key);
-        //std::thread t = std::thread(rc4.rc4Encryption, chunkedInputFile[i], key);
-		
-		//auto f4 = std::bind(&Foo::bar4, &foo, _1, _2, _3, _4);
-		
-		/*if(i != 0){
+		if(i != 0){
             
-			indexesState = indexesState + chunkedInputFile[i-1].length()-1;
+			aAndBState = aAndBState + chunkedInputFile[i-1].length()-1;
             
-			rc4.setIndexes(indexesState);
-		}*/
+			//rc4.setAandB(aAndBState);
+		}
 		
-		threadFutureDeque.emplace_back(async(&RC4::rc4Encryption, rc4, chunkedInputFile[i], key));
-		
-		//encryptedString[i] = future.get();		
-		
-		//encryptedString[i] = std::thread t(&RC4::rc4Encryption, &rc4, chunkedInputFile[i], key);
-		
-		//t.join();
+		threadFutureDeque.emplace_back(async(&RC4::rc4Encryption, rc4, chunkedInputFile[i], key, aAndBState));
 	}
 	
 	for(unsigned long int j= 0; j < threadNumber; j++) {
@@ -91,12 +77,9 @@ int main(int argc, char *argv[]) {
         threadFutureDeque[j].wait();
 
         encryptedString[j] = threadFutureDeque[j].get();
-
     }
 	
 	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
-		
-		//cout << encryptedString[i] << endl;
 		
 		if(i==0){
 		
@@ -106,15 +89,7 @@ int main(int argc, char *argv[]) {
 		
 			fileManager.writeFile(outputFileName, encryptedString[i], true);
 		}
-	}	
-	
-	/*
-	string messageToEncrypt = fileManager.readFile(inputFileName);
-	
-	string encrypted = rc4.rc4Encryption(messageToEncrypt, key);
-
-	fileManager.writeFile(outputFileName, encrypted);
-	*/
+	}
 	
 	return 0;
 }
