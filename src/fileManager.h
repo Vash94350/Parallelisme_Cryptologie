@@ -88,6 +88,8 @@ namespace fileManager {
 					
 					unsigned long long int numberOfChunckedPart = threadNumber;
 					
+					//testInputFile(fileName);
+					
 					if( (threadNumber>fileLength) || (chunkSize==1) ){
 						
 						numberOfChunckedPart = fileLength;
@@ -114,6 +116,15 @@ namespace fileManager {
 					chunkedFileTable = verifyChunkedFileTableLength(fileLength, chunkedFileTable, threadNumber);
 					
 					return chunkedFileTable;
+				}
+				
+				void testInputFile(string fileName){
+				
+					ifstream t(fileName, ios::binary);
+					
+					string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+					
+					cout << str << endl;
 				}
 				
 				unsigned long long int numberOfChunckedPart(string fileName, unsigned long int threadNumber) {
@@ -162,7 +173,7 @@ namespace fileManager {
 					
 					ifstream fileStream;
 					
-					fileStream.open(fileName, ios::in | ios::binary);
+					fileStream.open(fileName, ios::binary);
 					
 					string * chunkedFileTable = new string[nbChunckedPart];
 					
@@ -170,11 +181,18 @@ namespace fileManager {
 					
 					while( counter < nbChunckedPart ) {
 						
-						char * buffer = new char[chunkSize];
+						unsigned char * buffer = new unsigned char[chunkSize];
 
-						fileStream.read(buffer, chunkSize);
+						for(unsigned long long int c=0; c<chunkSize; c++){
 						
-						string stringifiedBuffer((char*) buffer);
+							buffer[c] = fileStream.get();
+						}
+						
+						//fileStream.read(buffer, chunkSize);
+						
+						string stringifiedBuffer(buffer, buffer+chunkSize);
+						
+						//cout << stringifiedBuffer << endl;
 						
 						stringifiedBuffer = stringifiedBuffer.substr(0, chunkSize);
 						
@@ -182,7 +200,7 @@ namespace fileManager {
 						
 						delete(buffer);
 						
-						counter++;							
+						counter++;
 					}
 				
 					fileStream.close();
@@ -190,11 +208,33 @@ namespace fileManager {
 					return chunkedFileTable;
 				}
 				
+				/*string * readFile(const char * fileName){
+				
+					string * data;
+				
+					ifstream fileStream(fileName, ios::in | ios::binary);
+					
+					if(fileStream) {
+						
+						fileStream.seekg(0, ios::end);
+						
+						data.resize(fileStream.tellg());
+						
+						fileStream.seekg(0, ios::beg);
+						
+						fileStream.read(&data[0], contents.size());
+						
+						fileStream.close();						
+					}
+					
+					return data;
+				}*/
+				
 				unsigned long long int getFileLength(const char * fileName) {
 					
 					ifstream fileStream;
 					
-					fileStream.open(fileName, ios::in | ios::binary);
+					fileStream.open(fileName, ios::binary);
 				
 					fileStream.seekg (0, fileStream.end);
 					
@@ -212,6 +252,8 @@ namespace fileManager {
 					unsigned long long int chunkedFileTableLength = 0;
 			
 					for(unsigned long int i = 0; i < threadNumber; i++) {
+						
+						//cout << chunkedFileTable[i] << endl;
 		
 						chunkedFileTableLength += chunkedFileTable[i].length();
 					}

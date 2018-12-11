@@ -64,9 +64,7 @@ int main(int argc, char *argv[]) {
 		
 		if(i != 0){
             
-			aAndBState = aAndBState + chunkedInputFile[i-1].length()-1;
-            
-			//rc4.setAandB(aAndBState);
+			aAndBState = aAndBState + chunkedInputFile[i-1].length();
 		}
 		
 		threadFutureDeque.emplace_back(async(&RC4::rc4Encryption, rc4, chunkedInputFile[i], key, aAndBState));
@@ -78,6 +76,8 @@ int main(int argc, char *argv[]) {
 
         encryptedString[j] = threadFutureDeque[j].get();
     }
+	
+	threadFutureDeque.clear();
 	
 	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
 		
