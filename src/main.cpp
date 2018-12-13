@@ -1,5 +1,5 @@
-#include "rc4.h"
 #include "fileManager.h"
+#include "executionManager.h"
 
 #include <queue>
 #include <thread>
@@ -11,8 +11,8 @@
 
 using std::string;
 
-using namespace rc4::parallel;
 using namespace fileManager::parallel;
+using namespace executionManager::parallel;
 
 using namespace std;
 
@@ -26,8 +26,6 @@ int main(int argc, char *argv[]) {
 		
 		return 0;
 	}
-	
-	FileManager fileManager;
 	
 	string extension = argv[1];
 
@@ -48,9 +46,66 @@ int main(int argc, char *argv[]) {
 		outputFileName = outputFileName + ".decrypt";
 	}
 	
-	string * chunkedInputFile = fileManager.readAndChunkFile(inputFileName, threadNumber);
+	FileManager fileManager;
 	
-	unsigned long long int chunkedInputFileLength = fileManager.numberOfChunckedPart(inputFileName, threadNumber);
+	unsigned long long int fileLength = fileManager.getFileLength(inputFileName.c_str());	
+	
+	unsigned long long int chunkSize = (unsigned long long int) fileLength / threadNumber;
+	
+	unsigned long long int lastChunkSize = 0;
+	
+	if( (threadNumber * chunkSize) < fileLength ) {		
+		
+		lastChunkSize = chunkSize + ( fileLength - (threadNumber * chunkSize) );
+	}	
+	
+	string * encryptedString = new string[threadNumber];
+	
+	unsigned long long int positionInTheFile = 0;
+	
+	deque<future<string>> threadFutureDeque;
+	
+	for(unsigned long long int i = 0; i < threadNumber; i++) {
+	
+		ExecutionManager executionManager;
+	
+		if(i != 0){
+            
+			positionInTheFile = positionInTheFile + chunkSize;
+		}
+		
+		if( (i == threadNumber-1) && (lastChunkSize!=0) ){
+		
+			chunkSize = lastChunkSize;		
+		}
+		
+		threadFutureDeque.emplace_back(async(launch::async, &ExecutionManager::executeRC4OnPartOfFile, executionManager, inputFileName, chunkSize, positionInTheFile, key));
+	}
+	
+	for(unsigned long int j= 0; j < threadNumber; j++) {
+
+        threadFutureDeque[j].wait();
+
+        encryptedString[j] = threadFutureDeque[j].get();
+    }
+	
+	threadFutureDeque.clear();
+	
+	for(unsigned long long int i = 0; i < threadNumber; i++) {
+		
+		if(i==0){
+		
+			fileManager.writeFile(outputFileName, encryptedString[i], false);
+		}
+		else {
+		
+			fileManager.writeFile(outputFileName, encryptedString[i], true);
+		}
+	}
+	
+	/*string * chunkedInputFile = fileManager.readAndChunkFile(inputFileName, threadNumber);
+	
+	unsigned long long int chunkedInputFileLength = fileManager.getNumberOfChunckedPart();
 	
 	string * encryptedString = new string[chunkedInputFileLength];
 	
@@ -72,7 +127,7 @@ int main(int argc, char *argv[]) {
 	
 	for(unsigned long int j= 0; j < threadNumber; j++) {
 
-        threadFutureDeque[j].wait();
+        //threadFutureDeque[j].wait();
 
         encryptedString[j] = threadFutureDeque[j].get();
     }
@@ -89,7 +144,7 @@ int main(int argc, char *argv[]) {
 		
 			fileManager.writeFile(outputFileName, encryptedString[i], true);
 		}
-	}
+	}*/
 	
 	return 0;
 }

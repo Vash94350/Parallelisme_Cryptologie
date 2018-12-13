@@ -116,7 +116,7 @@ namespace rc4 {
 			   
 				}
 				
-				string rc4Encryption(string messageToEncrypt, string key, unsigned long long int lastPosition){
+				/*string rc4Encryption(string messageToEncrypt, string key, unsigned long long int positionOfThePart){
 				
 					unsigned long long int messageToEncryptLength = messageToEncrypt.length();
 					
@@ -126,9 +126,9 @@ namespace rc4 {
 					
 					swapBox = ksa((unsigned char *) key.c_str(), key.length(), swapBox);
 					
-					if(lastPosition!=0){
+					if(positionOfThePart!=0){
 					
-						swapBox = setAandB(swapBox, lastPosition);
+						swapBox = setAandB(swapBox, positionOfThePart);
 					}
 					
 					unsigned char * encryptedMessage = prga((unsigned char *) messageToEncrypt.c_str(), messageToEncryptLength, swapBox);
@@ -141,6 +141,22 @@ namespace rc4 {
 					}
 					
 					return encryptedString;
+				}*/			
+				
+				string rc4Encryption(unsigned char * messageToEncrypt, string key, unsigned long long int messageToEncryptLength, unsigned long long int positionOfThePart){
+					
+					unsigned char * swapBox = new unsigned char[256]();
+					
+					swapBox = variableInitialization(swapBox);
+					
+					swapBox = ksa((unsigned char *) key.c_str(), key.length(), swapBox);
+					
+					if(positionOfThePart!=0){
+					
+						swapBox = setAandB(swapBox, positionOfThePart);
+					}
+					
+					return prga(messageToEncrypt, messageToEncryptLength, swapBox);
 				}
 			
 			protected:
@@ -199,7 +215,9 @@ namespace rc4 {
 					return swapBox;
 				}
 			
-				unsigned char * prga(unsigned char * toEncrypt, unsigned long long int messageSize, unsigned char * swapBox){
+				string prga(unsigned char * toEncrypt, unsigned long long int messageSize, unsigned char * swapBox){
+					
+					string encryptedString;
 					
 					for(unsigned long long int c=0; c<messageSize; c++){
 
@@ -209,10 +227,14 @@ namespace rc4 {
 
 						swapBox = swap(a, b, swapBox);
 
-						toEncrypt[c] = swapBox[ (swapBox[a] + swapBox[b]) %256 ] ^ toEncrypt[c];						
+						toEncrypt[c] = swapBox[ (swapBox[a] + swapBox[b]) %256 ] ^ toEncrypt[c];
+
+						encryptedString += toEncrypt[c];
 					}
 					
-					return toEncrypt;
+					delete(toEncrypt);
+					
+					return encryptedString;
 				}
 		};
 	}
