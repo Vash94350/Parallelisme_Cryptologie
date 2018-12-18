@@ -1,6 +1,7 @@
 #include "fileManager.h"
 #include "executionManager.h"
 
+#include <fstream>
 #include <queue>
 #include <thread>
 #include <future>
@@ -18,11 +19,9 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 	
-	if(argc<5){
-	
-		cout << "Error ! Missing Argument !" << endl;
+	if(argc<4){
 		
-		cout << "Argument Pattern : main.exe {-e|-d} NB_THREADS INPUT_FILE OUTPUT_FILE KEY" << endl;
+		cout << "main {-e|-d} NB_THREADS KEY INPUT_FILE" << endl;
 		
 		return 0;
 	}
@@ -31,11 +30,11 @@ int main(int argc, char *argv[]) {
 
 	unsigned long int threadNumber = atoi(argv[2]);
 	
-	string inputFileName = argv[3];
+	string key = argv[3];
 	
-	string outputFileName = argv[4];
-
-	string key = argv[5];
+	string inputFileName = argv[4];
+	
+	string outputFileName = inputFileName;
 	
 	if(extension.compare("-e") == 0){
 	
@@ -57,13 +56,13 @@ int main(int argc, char *argv[]) {
 	if( (threadNumber * chunkSize) < fileLength ) {		
 		
 		lastChunkSize = chunkSize + ( fileLength - (threadNumber * chunkSize) );
-	}	
+	}
 	
-	string * encryptedString = new string[threadNumber];
+	fileManager.createOutputFile(outputFileName.c_str(), fileLength);
 	
 	unsigned long long int positionInTheFile = 0;
 	
-	deque<future<string>> threadFutureDeque;
+	deque<future<bool>> threadFutureDeque;
 	
 	for(unsigned long long int i = 0; i < threadNumber; i++) {
 	
@@ -79,72 +78,13 @@ int main(int argc, char *argv[]) {
 			chunkSize = lastChunkSize;		
 		}
 		
-		threadFutureDeque.emplace_back(async(launch::async, &ExecutionManager::executeRC4OnPartOfFile, executionManager, inputFileName, chunkSize, positionInTheFile, key));
-	}
+		threadFutureDeque.emplace_back(async(launch::async, &ExecutionManager::executeRC4OnPartOfFile, executionManager, inputFileName, chunkSize, positionInTheFile, key, outputFileName));
+	}	
 	
 	for(unsigned long int j= 0; j < threadNumber; j++) {
 
         threadFutureDeque[j].wait();
-
-        encryptedString[j] = threadFutureDeque[j].get();
     }
-	
-	threadFutureDeque.clear();
-	
-	for(unsigned long long int i = 0; i < threadNumber; i++) {
-		
-		if(i==0){
-		
-			fileManager.writeFile(outputFileName, encryptedString[i], false);
-		}
-		else {
-		
-			fileManager.writeFile(outputFileName, encryptedString[i], true);
-		}
-	}
-	
-	/*string * chunkedInputFile = fileManager.readAndChunkFile(inputFileName, threadNumber);
-	
-	unsigned long long int chunkedInputFileLength = fileManager.getNumberOfChunckedPart();
-	
-	string * encryptedString = new string[chunkedInputFileLength];
-	
-	unsigned long long int aAndBState = 0;
-	
-	deque<future<string>> threadFutureDeque;
-	
-	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
-		
-		RC4 rc4;
-		
-		if(i != 0){
-            
-			aAndBState = aAndBState + chunkedInputFile[i-1].length();
-		}
-		
-		threadFutureDeque.emplace_back(async(&RC4::rc4Encryption, rc4, chunkedInputFile[i], key, aAndBState));
-	}
-	
-	for(unsigned long int j= 0; j < threadNumber; j++) {
-
-        //threadFutureDeque[j].wait();
-
-        encryptedString[j] = threadFutureDeque[j].get();
-    }
-	
-	threadFutureDeque.clear();
-	
-	for(unsigned long long int i = 0; i < chunkedInputFileLength; i++) {
-		
-		if(i==0){
-		
-			fileManager.writeFile(outputFileName, encryptedString[i], false);
-		}
-		else {
-		
-			fileManager.writeFile(outputFileName, encryptedString[i], true);
-		}
-	}*/
 	
 	return 0;
 }

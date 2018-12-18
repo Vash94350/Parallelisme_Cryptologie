@@ -22,22 +22,24 @@ namespace executionManager {
 			public:
 			
 				ExecutionManager() {
-					
+				
 				}
 					
 				~ExecutionManager() {
-					
+				
 				}
 				
-				string executeRC4OnPartOfFile(string fileName, unsigned long long int chunkSize, unsigned long long int positionOfThePart, string key) {
+				bool executeRC4OnPartOfFile(string inputFileName, unsigned long long int chunkSize, unsigned long long int positionOfThePart, string key, string outputFileName) {
 				
 					FileManager fileManager;
-					
-					unsigned char * partOfTheToEncrypt =  fileManager.getPartOfFile(fileName.c_str(), chunkSize, positionOfThePart);
-					
+				
+					unsigned char * partOfTheToEncrypt =  fileManager.getPartOfFile(inputFileName.c_str(), chunkSize, positionOfThePart);
+				
 					RC4 rc4;
-					
-					return rc4.rc4Encryption(partOfTheToEncrypt, key, chunkSize, positionOfThePart);				
+				
+					fileManager.writeFile(outputFileName.c_str(), rc4.rc4Encryption(partOfTheToEncrypt, key, chunkSize, positionOfThePart), positionOfThePart);
+				
+					return true;
 				}
 				
 			private:

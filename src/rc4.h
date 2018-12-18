@@ -116,33 +116,6 @@ namespace rc4 {
 			   
 				}
 				
-				/*string rc4Encryption(string messageToEncrypt, string key, unsigned long long int positionOfThePart){
-				
-					unsigned long long int messageToEncryptLength = messageToEncrypt.length();
-					
-					unsigned char * swapBox = new unsigned char[256]();
-					
-					swapBox = variableInitialization(swapBox);
-					
-					swapBox = ksa((unsigned char *) key.c_str(), key.length(), swapBox);
-					
-					if(positionOfThePart!=0){
-					
-						swapBox = setAandB(swapBox, positionOfThePart);
-					}
-					
-					unsigned char * encryptedMessage = prga((unsigned char *) messageToEncrypt.c_str(), messageToEncryptLength, swapBox);
-					
-					string encryptedString = "";
-					
-					for(unsigned long long int r=0; r<messageToEncryptLength; r++){
-					
-						encryptedString += encryptedMessage[r];
-					}
-					
-					return encryptedString;
-				}*/			
-				
 				string rc4Encryption(unsigned char * messageToEncrypt, string key, unsigned long long int messageToEncryptLength, unsigned long long int positionOfThePart){
 					
 					unsigned char * swapBox = new unsigned char[256]();

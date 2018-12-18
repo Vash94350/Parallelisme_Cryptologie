@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <fcntl.h>
+
 using std::string;
 
 using namespace std;
@@ -72,74 +74,34 @@ namespace fileManager {
 
 				FileManager() {
 				
-					numberOfChunckedPart = 0;
 				}
 				
 				~FileManager() {
 				
 				}
 				
-				string * readAndChunkFile(string fileName, unsigned long int threadNumber) {
-					
-					const char * formatedFilename = fileName.c_str();
-					
-					unsigned long long int fileLength = getFileLength(formatedFilename);
-					
-					unsigned long long int chunkSize = (int) fileLength / threadNumber;
-					
-					numberOfChunckedPart = threadNumber;
-					
-					if( (threadNumber>fileLength) || (chunkSize==1) ) {
-						
-						numberOfChunckedPart = fileLength;
-						
-						chunkSize = 1;
-					}
-					else if( (numberOfChunckedPart*chunkSize) < fileLength ) {
-						
-						numberOfChunckedPart ++;
-					}
-					
-					string * chunkedFileTable = chunkFile(formatedFilename, numberOfChunckedPart, chunkSize);
-					
-					if(numberOfChunckedPart > threadNumber) {
-						
-						string one = chunkedFileTable[threadNumber-1];
-						string two = chunkedFileTable[numberOfChunckedPart-1];
-						
-						string fusion = one + two;
-						
-						chunkedFileTable[threadNumber-1] = fusion;					
-					}
-					
-					chunkedFileTable = verifyChunkedFileTableLength(fileLength, chunkedFileTable, threadNumber);
-					
-					return chunkedFileTable;
+				unsigned long long int getFileLength(const char * fileName) {
+				
+					ifstream fileStream;
+				
+					fileStream.open(fileName, ios::in | ios::binary);
+				
+					fileStream.seekg(0, fileStream.end);
+				
+					unsigned long long int length = fileStream.tellg();
+				
+					fileStream.close();
+				
+					return length;
 				}
-				
-				unsigned long long int getNumberOfChunckedPart() {					
-					
-					return numberOfChunckedPart;
-				}			
-				
-				void writeFile(string fileName, string data, bool appendMode) {
-					
-					ofstream outputFile;
-					
-					if(appendMode) {
-						
-						outputFile.open(fileName, std::ios_base::app);
-					}
-					else {
-						
-						outputFile.open(fileName);
-					}				
 
-					outputFile << data;
-					
-					outputFile.close();					
+				int createOutputFile(const char * fileName, unsigned long long int fileSize){
+				
+					int fileDescriptor = open(fileName, O_RDWR|O_CREAT, 0666);
+				
+					return posix_fallocate(fileDescriptor, 0, fileSize);
 				}
-			
+				
 				unsigned char * getPartOfFile(const char * fileName, unsigned long long int chunkSize, unsigned long long int positionOfThePart) {
 					
 					ifstream fileStream;
@@ -155,8 +117,6 @@ namespace fileManager {
 						partOfFile[c] = fileStream.get();
 					}
 					
-					//fileStream.read(partOfFile, chunkSize);
-					
 					partOfFile[chunkSize] = 0; 
 					
 					fileStream.close();
@@ -164,90 +124,21 @@ namespace fileManager {
 					return partOfFile;
 				}
 				
-				unsigned long long int getFileLength(const char * fileName) {
+				void writeFile(const char * fileName, string data, unsigned long long int positionOfThePart) {
 					
-					ifstream fileStream;
+					ofstream outputFile;
+	
+					outputFile.open(fileName, ios_base::in | ios_base::out | ios_base::ate);	
 					
-					fileStream.open(fileName, ios::in | ios::binary);
-				
-					fileStream.seekg(0, fileStream.end);
+					outputFile.seekp(positionOfThePart, ios::beg);
 					
-					unsigned long long int length = fileStream.tellg();
+					outputFile << data;
 					
-					fileStream.seekg(0, fileStream.beg);
-					
-					fileStream.close();
-					
-					return length;
+					outputFile.close();
 				}
 			
 			private:
 			
-				unsigned long long int numberOfChunckedPart;
-				
-				string * chunkFile(const char * fileName, unsigned long int nbChunckedPart, unsigned long long int chunkSize) {
-					
-					ifstream fileStream;
-					
-					fileStream.open(fileName, ios::in | ios::binary);
-					
-					string * chunkedFileTable = new string[nbChunckedPart];
-					
-					unsigned long int counter = 0;		
-					
-					while( counter < nbChunckedPart ) {
-						
-						unsigned char * buffer = new unsigned char[chunkSize];
-
-						for(unsigned long long int c=0; c<chunkSize; c++) {
-						
-							buffer[c] = fileStream.get();
-						}
-						
-						//fileStream.read(buffer, chunkSize);
-						
-						string stringifiedBuffer(buffer, buffer+chunkSize);
-						
-						//cout << counter << " : " << stringifiedBuffer << endl;
-						
-						//stringifiedBuffer = stringifiedBuffer.substr(0, chunkSize);
-						
-						//cout << "b : " << stringifiedBuffer << endl;
-						
-						chunkedFileTable[counter] = stringifiedBuffer;
-						
-						delete(buffer);
-						
-						counter++;
-					}
-				
-					fileStream.close();
-
-					return chunkedFileTable;
-				}
-				
-				string * verifyChunkedFileTableLength(unsigned long long int fileLength, string * chunkedFileTable, unsigned long int threadNumber) {
-			
-					unsigned long long int chunkedFileTableLength = 0;
-			
-					for(unsigned long int i = 0; i < threadNumber; i++) {
-						
-						//cout << chunkedFileTable[i] << endl;
-		
-						chunkedFileTableLength += chunkedFileTable[i].length();
-					}
-					
-					if(chunkedFileTableLength != fileLength) {
-						
-						unsigned long long int numberOfOverflowChar = chunkedFileTableLength - fileLength;
-						
-						unsigned long long int goodLength = chunkedFileTable[threadNumber-1].length() - numberOfOverflowChar;
-					
-						chunkedFileTable[threadNumber-1] = chunkedFileTable[threadNumber-1].substr(0, goodLength);
-					}
-					
-					return chunkedFileTable;
-				}
 		};		
 	}
 }
