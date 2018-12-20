@@ -191,6 +191,8 @@ namespace rc4 {
 				string prga(unsigned char * toEncrypt, unsigned long long int messageSize, unsigned char * swapBox){
 					
 					string encryptedString;
+			
+					encryptedString.reserve(messageSize);
 					
 					for(unsigned long long int c=0; c<messageSize; c++){
 

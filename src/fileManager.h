@@ -137,8 +137,6 @@ namespace fileManager {
 					outputFile.close();
 				}
 			
-			private:
-			
 		};		
 	}
 }

@@ -21,15 +21,24 @@ namespace executionManager {
 			
 			public:
 			
-				ExecutionManager() {
+				ExecutionManager(string inputFileNameData, string keyData, string outputFileNameData, unsigned long long int chunkSizeData, unsigned long long int positionOfThePartData) {
 				
+					inputFileName = inputFileNameData;
+
+					key = keyData;
+
+					outputFileName = outputFileNameData;
+
+					chunkSize = chunkSizeData;
+
+					positionOfThePart = positionOfThePartData;
 				}
 					
 				~ExecutionManager() {
-				
+		
 				}
 				
-				bool executeRC4OnPartOfFile(string inputFileName, unsigned long long int chunkSize, unsigned long long int positionOfThePart, string key, string outputFileName) {
+				void executeRC4OnPartOfFile() {
 				
 					FileManager fileManager;
 				
@@ -38,12 +47,19 @@ namespace executionManager {
 					RC4 rc4;
 				
 					fileManager.writeFile(outputFileName.c_str(), rc4.rc4Encryption(partOfTheToEncrypt, key, chunkSize, positionOfThePart), positionOfThePart);
-				
-					return true;
-				}
+				}	
 				
 			private:
-			
+
+				string inputFileName;
+
+				string key;
+
+				string outputFileName;	
+				
+				unsigned long long int chunkSize;
+
+				unsigned long long int positionOfThePart;	
 		};
 	}
 }

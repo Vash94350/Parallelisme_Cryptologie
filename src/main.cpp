@@ -1,13 +1,9 @@
 #include "fileManager.h"
 #include "executionManager.h"
 
-#include <fstream>
-#include <queue>
-#include <thread>
+#include <vector>
 #include <future>
-#include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <string.h>
 
 using std::string;
@@ -18,7 +14,7 @@ using namespace executionManager::parallel;
 using namespace std;
 
 int main(int argc, char *argv[]) {
-	
+
 	if(argc<4){
 		
 		cout << "main {-e|-d} NB_THREADS KEY INPUT_FILE" << endl;
@@ -39,7 +35,7 @@ int main(int argc, char *argv[]) {
 	if(extension.compare("-e") == 0){
 	
 		outputFileName = outputFileName + ".rc4";
-	}
+	} 
 	else if(extension.compare("-d") == 0){
 		
 		outputFileName = outputFileName + ".decrypt";
@@ -57,17 +53,17 @@ int main(int argc, char *argv[]) {
 		
 		lastChunkSize = chunkSize + ( fileLength - (threadNumber * chunkSize) );
 	}
-	
+
 	fileManager.createOutputFile(outputFileName.c_str(), fileLength);
 	
 	unsigned long long int positionInTheFile = 0;
 	
-	deque<future<bool>> threadFutureDeque;
-	
+	vector<future<void>> threadFutureQeue;
+
+	threadFutureQeue.reserve(threadNumber);
+
 	for(unsigned long long int i = 0; i < threadNumber; i++) {
-	
-		ExecutionManager executionManager;
-	
+
 		if(i != 0){
             
 			positionInTheFile = positionInTheFile + chunkSize;
@@ -77,14 +73,11 @@ int main(int argc, char *argv[]) {
 		
 			chunkSize = lastChunkSize;		
 		}
-		
-		threadFutureDeque.emplace_back(async(launch::async, &ExecutionManager::executeRC4OnPartOfFile, executionManager, inputFileName, chunkSize, positionInTheFile, key, outputFileName));
-	}	
 	
-	for(unsigned long int j= 0; j < threadNumber; j++) {
+		ExecutionManager executionManager = ExecutionManager(inputFileName, key, outputFileName, chunkSize, positionInTheFile);
 
-        threadFutureDeque[j].wait();
-    }
-	
+		threadFutureQeue.push_back(async(launch::async, &ExecutionManager::executeRC4OnPartOfFile, executionManager));
+	}
+
 	return 0;
 }
